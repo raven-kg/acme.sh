@@ -14,19 +14,6 @@ mail_send() {
   _debug "_content" "$_content"
   _debug "_statusCode" "$_statusCode"
 
-  MAIL_BIN="${MAIL_BIN:-$(_readaccountconf_mutable MAIL_BIN)}"
-  if [ -n "$MAIL_BIN" ] && ! _exists "$MAIL_BIN"; then
-    _err "It seems that the command $MAIL_BIN is not in path."
-    return 1
-  fi
-  _MAIL_CMD=$(_mail_cmnd)
-  if [ -n "$MAIL_BIN" ]; then
-    _saveaccountconf_mutable MAIL_BIN "$MAIL_BIN"
-  else
-    _clearaccountconf "MAIL_BIN"
-  fi
-  _MAIL_BODY=$(_mail_body)
-
   MAIL_FROM="${MAIL_FROM:-$(_readaccountconf_mutable MAIL_FROM)}"
   if [ -n "$MAIL_FROM" ]; then
     if ! _contains "$MAIL_FROM" "@"; then
@@ -53,8 +40,22 @@ mail_send() {
     fi
   fi
 
+  MAIL_BIN="${MAIL_BIN:-$(_readaccountconf_mutable MAIL_BIN)}"
+  if [ -n "$MAIL_BIN" ] && ! _exists "$MAIL_BIN"; then
+    _err "It seems that the command $MAIL_BIN is not in path."
+    return 1
+  fi
+  _MAIL_CMD=$(_mail_cmnd)
+  if [ -n "$MAIL_BIN" ]; then
+    _saveaccountconf_mutable MAIL_BIN "$MAIL_BIN"
+  else
+    _clearaccountconf "MAIL_BIN"
+  fi
+
   contenttype="text/plain; charset=utf-8"
   subject="=?UTF-8?B?$(echo "$_subject" | _base64)?="
+  _MAIL_BODY=$(_mail_body)
+
   result=$({ echo "$_MAIL_BODY" | eval "$_MAIL_CMD"; } 2>&1)
 
   if [ $? -ne 0 ]; then
